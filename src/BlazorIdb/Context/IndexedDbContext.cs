@@ -15,7 +15,7 @@ namespace BlazorIdb;
 /// <see cref="OnModelCreating"/> for schema configuration.
 /// </summary>
 /// <remarks>
-/// Add <c>&lt;script src="_content/BlazorIdb/blazordb.js"&gt;&lt;/script&gt;</c>
+/// Add <c>&lt;script src="_content/BlazorIdb/blazor-idb.js"&gt;&lt;/script&gt;</c>
 /// to your Blazor host page before using any context instance.
 /// </remarks>
 public abstract class IndexedDbContext : IAsyncDisposable

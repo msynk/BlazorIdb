@@ -49,7 +49,7 @@ An EF Core–style IndexedDB wrapper for Blazor WebAssembly. Define your data mo
 2. Add the script to `wwwroot/index.html` before the closing `</body>` tag:
 
    ```html
-   <script src="_content/BlazorIdb/blazordb.js"></script>
+   <script src="_content/BlazorIdb/blazor-idb.js"></script>
    ```
 
 ---
@@ -506,7 +506,7 @@ src/
 │   ├── Options/                 # IndexedDbOptions
 │   ├── Query/                   # IndexedDbQuery<T>, QueryTranslator
 │   ├── Reactive/                # LiveQueryObservable<T>
-│   └── wwwroot/blazordb.js      # IndexedDB JS implementation
+│   └── wwwroot/blazor-idb.js   # IndexedDB JS implementation
 ├── BlazorIdb.Sample/            # Blazor WASM sample application
 ├── BlazorIdb.SourceGenerators/  # Roslyn incremental source generator
 └── BlazorIdb.Tests/             # xUnit unit tests

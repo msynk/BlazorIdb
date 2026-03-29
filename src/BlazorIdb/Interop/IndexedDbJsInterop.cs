@@ -5,7 +5,7 @@ namespace BlazorIdb.Interop;
 
 /// <summary>
 /// Thin .NET wrapper around the <c>window.BlazorIdb</c> JavaScript object defined in
-/// <c>blazordb.js</c>.  All public members are <c>async</c>; no synchronous paths exist.
+/// <c>blazor-idb.js</c>.  All public members are <c>async</c>; no synchronous paths exist.
 /// </summary>
 public sealed class IndexedDbJsInterop
 {

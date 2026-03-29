@@ -1,6 +1,6 @@
 ﻿// BlazorIdb - Slim IndexedDB Adapter for Blazor
 // Provides a bridge between .NET/Blazor and the browser's IndexedDB API.
-// This file is served as a static web asset from _content/BlazorIdb/blazordb.js
+// This file is served as a static web asset from _content/BlazorIdb/blazor-idb.js
 
 (function () {
     'use strict';

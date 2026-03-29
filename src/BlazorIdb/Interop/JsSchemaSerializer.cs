@@ -6,7 +6,7 @@ namespace BlazorIdb.Interop;
 
 /// <summary>
 /// Serializes an <see cref="IndexedDbModel"/> to the JSON schema format expected by
-/// <c>blazordb.js</c>.
+/// <c>blazor-idb.js</c>.
 /// </summary>
 internal static class JsSchemaSerializer
 {
