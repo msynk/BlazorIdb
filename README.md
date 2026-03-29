@@ -1,6 +1,6 @@
 # BlazorIdb
 
-An EF Core–style IndexedDB wrapper for Blazor WebAssembly. Define your data model with attributes or fluent API, get typed `DbSet`-like stores, LINQ queries, full-text search, live queries, and versioned schema migrations — all backed by the browser's native IndexedDB.
+An EF Core–style IndexedDB wrapper for Blazor WebAssembly. Define your data model with attributes or fluent API, get typed `DbSet`-like stores, LINQ queries, full-text search, live queries, and versioned schema migrations; all backed by the browser's native IndexedDB.
 
 ## Table of Contents
 
@@ -23,16 +23,16 @@ An EF Core–style IndexedDB wrapper for Blazor WebAssembly. Define your data mo
 
 ## Features
 
-- **EF Core–style context** — derive from `IndexedDbContext`, declare `IndexedDbSet<T>` properties, override `OnModelCreating`
-- **Attribute-driven or fluent schema configuration** — both styles work together
-- **CRUD & bulk operations** — `AddAsync`, `UpdateAsync`, `PutAsync`, `DeleteAsync`, `FindAsync`, `ClearAsync`, `CountAsync`, ...
-- **Composable LINQ queries** — `Where`, `OrderBy`, `Skip`, `Take` with native IndexedDB push-down for equality, range, prefix, and bounded-range predicates
-- **Full-text search** — tokenized multi-entry indexes with AND-semantics across multiple terms
-- **Atomic multi-store transactions** — wrap operations across multiple stores in a single `TransactionAsync` call
-- **Reactive live queries** — `IObservable<IEnumerable<T>>` backed by lightweight JS polling
-- **Versioned schema migrations** — add/remove stores and indexes per version, with data migration callbacks
-- **Roslyn source generator** — compile-time context validation
-- **Zero runtime dependencies** beyond the ASP.NET WebAssembly SDK
+- **EF Core–style context**: derive from `IndexedDbContext`, declare `IndexedDbSet<T>` properties, override `OnModelCreating`
+- **Attribute-driven or fluent schema configuration**: both styles work together
+- **CRUD & bulk operations**: `AddAsync`, `UpdateAsync`, `PutAsync`, `DeleteAsync`, `FindAsync`, `ClearAsync`, `CountAsync`, ...
+- **Composable LINQ queries**: `Where`, `OrderBy`, `Skip`, `Take` with native IndexedDB push-down for equality, range, prefix, and bounded-range predicates
+- **Full-text search**: tokenized multi-entry indexes with AND-semantics across multiple terms
+- **Atomic multi-store transactions**: wrap operations across multiple stores in a single `TransactionAsync` call
+- **Reactive live queries**: `IObservable<IEnumerable<T>>` backed by lightweight JS polling
+- **Versioned schema migrations**: add/remove stores and indexes per version, with data migration callbacks
+- **Roslyn source generator**: compile-time context validation
+- **Zero runtime dependencies**: beyond the ASP.NET WebAssembly SDK
 
 ---
 
@@ -182,7 +182,7 @@ public sealed class AppDb : IndexedDbContext
 }
 ```
 
-Always call `EnsureInitializedAsync()` before any store access (e.g., in `OnInitializedAsync`). The method is idempotent — it is safe to call multiple times.
+Always call `EnsureInitializedAsync()` before any store access (e.g., in `OnInitializedAsync`). The method is idempotent, it is safe to call multiple times.
 
 ---
 
@@ -195,13 +195,13 @@ Attributes can replace or supplement the fluent API. Both approaches are fully c
 | `[IdbKey(autoIncrement?)]` | Property | Primary key. Set `autoIncrement = true` for integer auto-increment keys. Convention: `Id` or `{TypeName}Id` is detected automatically. |
 | `[IdbStore(name)]` | Class | Override the default store name (defaults to camelCase plural, e.g. `Product` → `products`). |
 | `[IdbIndex(name?)]` | Property | Regular (non-unique, single-entry) index. |
-| `[IdbUniqueIndex(name?)]` | Property | Unique index — insertion throws if the value already exists. |
+| `[IdbUniqueIndex(name?)]` | Property | Unique index, insertion throws if the value already exists. |
 | `[IdbMultiEntryIndex(name?)]` | Property | One index entry per element of an array/collection property, enabling "array contains" queries. |
 | `[IdbFullTextIndex(shadowField?)]` | Property | Tokenizes the property value into a `{PropertyName}_fts` shadow `string[]` field backed by a multi-entry index, enabling full-text search. |
 | `[IdbIgnore]` | Property | Exclude the property from serialization and index discovery. |
 | `[IdbNativeOnly]` | Class | Require all query predicates to be translated to native IndexedDB operations; throws `IdbNativeQueryException` on fallback. |
 
-**Example — annotation-based model:**
+**Example - annotation-based model:**
 
 ```csharp
 [IdbStore("products")]
@@ -309,7 +309,7 @@ await Db.Products.ClearAsync();
 `IndexedDbSet<T>` provides both a quick `Where` shorthand and a full composable query builder.
 
 ```csharp
-// Shorthand — executed with native IDB push-down when possible
+// Shorthand, executed with native IDB push-down when possible
 var electronics = await Db.Products
     .Where(p => p.Category == "Electronics")
     .ToListAsync();
@@ -340,7 +340,7 @@ The query translator automatically pushes supported predicates to IndexedDB, avo
 | `x.Prop > lb && x.Prop < ub` | `IDBKeyRange.bound` |
 | `x.Prop.StartsWith("prefix")` | `IDBKeyRange.bound(prefix, prefix + '\uffff')` |
 
-Predicates that cannot be translated fall back to an in-memory scan transparently. To opt out of silently falling back, use `.AsNativeOnly()` (or `[IdbNativeOnly]` on the class) — this causes an `IdbNativeQueryException` to be thrown instead.
+Predicates that cannot be translated fall back to an in-memory scan transparently. To opt out of silently falling back, use `.AsNativeOnly()` (or `[IdbNativeOnly]` on the class), this causes an `IdbNativeQueryException` to be thrown instead.
 
 ---
 
@@ -357,10 +357,10 @@ public class BlogPost
 
     [IdbFullTextIndex]
     public string Body { get; set; } = "";
-    public string[]? Body_fts { get; set; } // shadow field — auto-maintained
+    public string[]? Body_fts { get; set; } // shadow field, auto-maintained
 }
 
-// Query — multiple terms are AND-ed
+// Query, multiple terms are AND-ed
 var results = await Db.BlogPosts.Search("blazor performance").ToListAsync();
 
 // Compose with other operators
@@ -432,12 +432,12 @@ If any operation inside the callback throws, the entire transaction is rolled ba
 
 ## Migrations & Versioning
 
-Each `UseVersion(n, ...)` block declares the schema delta to apply when upgrading from the previous version to `n`. Blocks are applied incrementally — a fresh install runs all versions in order, an upgrade from version 1 to 3 runs only versions 2 and 3.
+Each `UseVersion(n, ...)` block declares the schema delta to apply when upgrading from the previous version to `n`. Blocks are applied incrementally, a fresh install runs all versions in order, an upgrade from version 1 to 3 runs only versions 2 and 3.
 
 ```csharp
 protected override void OnModelCreating(ModelBuilder builder)
 {
-    // Version 1 — initial schema
+    // Version 1, initial schema
     builder.UseVersion(1, v =>
     {
         v.Entity<Product>(e =>
@@ -448,7 +448,7 @@ protected override void OnModelCreating(ModelBuilder builder)
         });
     });
 
-    // Version 2 — add a new index and backfill data
+    // Version 2, add a new index and backfill data
     builder.UseVersion(2, v =>
     {
         v.Entity<Product>(e =>
@@ -467,7 +467,7 @@ protected override void OnModelCreating(ModelBuilder builder)
         });
     });
 
-    // Version 3 — drop a store
+    // Version 3, drop a store
     builder.UseVersion(3, v =>
     {
         v.DeleteStore("legacyStore");
@@ -488,7 +488,7 @@ builder.Services.AddIndexedDb<AppDb>(opts =>
 
 The `BlazorIdb.SourceGenerators` package is automatically included with `BlazorIdb`. It is a Roslyn incremental source generator that discovers all `IndexedDbContext` subclasses at compile time and emits a `partial class` stub for each, enabling compile-time validation of context configuration.
 
-No additional setup is required — it runs automatically as part of the build.
+No additional setup is required, it runs automatically as part of the build.
 
 ---
 
