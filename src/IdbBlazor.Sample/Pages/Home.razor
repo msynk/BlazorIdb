@@ -1,0 +1,22 @@
+@page "/"
+<PageTitle>IdbBlazor Demo</PageTitle>
+
+<h1>IdbBlazor – EF Core-style IndexedDB for Blazor</h1>
+
+<p>
+    This sample demonstrates a complete IndexedDB integration built with IdbBlazor.
+    Navigate to the <a href="products">Products</a> or <a href="blog">Blog Posts</a>
+    pages to see CRUD, full-text search, live queries, and versioned migrations in action.
+</p>
+
+<h2>Features demonstrated</h2>
+<ul>
+    <li><strong>EF Core-style context &amp; DbSet</strong> — see <code>AppDb.cs</code></li>
+    <li><strong>Data annotations</strong> — <code>[IdbKey]</code>, <code>[IdbIndex]</code>, <code>[IdbFullTextIndex]</code>, etc.</li>
+    <li><strong>Fluent ModelBuilder</strong> — versioned schema with <code>UseVersion(1, ...)</code></li>
+    <li><strong>LINQ queries</strong> — <code>Where</code>, <code>OrderBy</code>, <code>Take</code>, <code>Skip</code></li>
+    <li><strong>Full-text search</strong> — <code>.Search("term")</code> via multi-entry shadow indexes</li>
+    <li><strong>Transactions</strong> — <code>db.TransactionAsync(tx =&gt; ...)</code></li>
+    <li><strong>Live queries</strong> — <code>.LiveQuery()</code> backed by polling</li>
+    <li><strong>Versioned migrations</strong> — automatic schema upgrade + data migration callbacks</li>
+</ul>

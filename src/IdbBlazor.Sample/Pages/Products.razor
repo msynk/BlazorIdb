@@ -1,0 +1,244 @@
+@page "/products"
+@inject AppDb Db
+@implements IDisposable
+
+<PageTitle>Products</PageTitle>
+
+<h1>Products</h1>
+
+<div class="mb-3 d-flex gap-2 align-items-center">
+    <input class="form-control w-50" placeholder="Search products…" @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchKeyUp" />
+    <button class="btn btn-primary" @onclick="LoadAsync">Refresh</button>
+    <button class="btn btn-success" @onclick="OpenAddModal">+ Add Product</button>
+    <button class="btn btn-warning" @onclick="SeedAsync">Seed demo data</button>
+</div>
+
+@if (_loading)
+{
+    <p><em>Loading…</em></p>
+}
+else if (!_products.Any())
+{
+    <p>No products found. Click <strong>Seed demo data</strong> to get started.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Tags</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in _products)
+            {
+                <tr>
+                    <td>@p.Id</td>
+                    <td>@p.Name</td>
+                    <td>@p.Category</td>
+                    <td>@p.Price.ToString("C")</td>
+                    <td>@(p.Tags != null ? string.Join(", ", p.Tags) : "")</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => OpenEditModal(p)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(p.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="text-muted">Total: @_totalCount  |  Showing: @_products.Count</p>
+}
+
+@if (_showModal)
+{
+    <div class="modal d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@( _editing ? "Edit product" : "Add product" )</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label>Name</label>
+                        <input class="form-control" @bind="_form.Name" />
+                    </div>
+                    <div class="mb-2">
+                        <label>Category</label>
+                        <input class="form-control" @bind="_form.Category" />
+                    </div>
+                    <div class="mb-2">
+                        <label>Price</label>
+                        <input class="form-control" type="number" step="0.01" @bind="_form.Price" />
+                    </div>
+                    <div class="mb-2">
+                        <label>Description</label>
+                        <textarea class="form-control" @bind="_form.Description"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label>Tags (comma-separated)</label>
+                        <input class="form-control" @bind="_tagsInput" />
+                    </div>
+                    @if (_editing)
+                    {
+                        <div class="mb-2">
+                            <label>Image URL</label>
+                            <input class="form-control" @bind="_form.ImageUrl" />
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SaveAsync">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="alert alert-danger mt-2">@_error</div>
+}
+
+@code {
+    private List<Product> _products = new();
+    private int _totalCount;
+    private bool _loading = true;
+    private bool _showModal;
+    private bool _editing;
+    private string _searchTerm = string.Empty;
+    private string _tagsInput = string.Empty;
+    private string _error = string.Empty;
+    private Product _form = new();
+    private IDisposable? _liveSubscription;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Db.EnsureInitializedAsync();
+        await LoadAsync();
+
+        _liveSubscription = Db.Products
+            .LiveQuery()
+            .Subscribe(items =>
+            {
+                _products = items.ToList();
+                _totalCount = _products.Count;
+                InvokeAsync(StateHasChanged);
+            });
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = string.Empty;
+        try
+        {
+            var query = Db.Products.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(_searchTerm))
+            {
+                _products = await Db.Products.Where(p =>
+                    p.Name.Contains(_searchTerm) || (p.Category != null && p.Category.Contains(_searchTerm)))
+                    .ToListAsync();
+            }
+            else
+            {
+                _products = await Db.Products.ToListAsync();
+            }
+            _totalCount = await Db.Products.CountAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        _loading = false;
+    }
+
+    private async Task SeedAsync()
+    {
+        try
+        {
+            await Db.TransactionAsync(async tx =>
+            {
+                var products = tx.Set<Product>();
+                await products.AddAsync(new Product { Id = Guid.NewGuid().ToString(), Sku = "ELEC-LP-001", Name = "Laptop Pro", Category = "Electronics", Price = 1299.99m, Description = "High performance laptop for developers", Tags = new[] { "tech", "laptop", "work" } });
+                await products.AddAsync(new Product { Id = Guid.NewGuid().ToString(), Sku = "ELEC-KB-002", Name = "Mechanical Keyboard", Category = "Electronics", Price = 149.99m, Description = "Tactile mechanical keyboard with RGB", Tags = new[] { "tech", "keyboard", "gaming" } });
+                await products.AddAsync(new Product { Id = Guid.NewGuid().ToString(), Sku = "FURN-CH-003", Name = "Ergonomic Chair", Category = "Furniture", Price = 349.00m, Description = "Lumbar support office chair", Tags = new[] { "furniture", "ergonomic", "work" } });
+                await products.AddAsync(new Product { Id = Guid.NewGuid().ToString(), Sku = "FURN-DS-004", Name = "Standing Desk", Category = "Furniture", Price = 499.00m, Description = "Electric height-adjustable desk", Tags = new[] { "furniture", "desk", "ergonomic" } });
+            });
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        try
+        {
+            await Db.Products.DeleteAsync(id);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            _form.Tags = _tagsInput.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (_editing)
+                await Db.Products.UpdateAsync(_form);
+            else
+            {
+                if (string.IsNullOrWhiteSpace(_form.Id))
+                    _form.Id = Guid.NewGuid().ToString();
+                await Db.Products.AddAsync(_form);
+            }
+            CloseModal();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private void OpenAddModal()
+    {
+        _form = new Product { Id = Guid.NewGuid().ToString() };
+        _tagsInput = string.Empty;
+        _editing = false;
+        _showModal = true;
+    }
+
+    private void OpenEditModal(Product p)
+    {
+        _form = new Product
+        {
+            Id = p.Id, Name = p.Name, Category = p.Category,
+            Price = p.Price, Description = p.Description,
+            ImageUrl = p.ImageUrl, Tags = p.Tags
+        };
+        _tagsInput = p.Tags != null ? string.Join(", ", p.Tags) : string.Empty;
+        _editing = true;
+        _showModal = true;
+    }
+
+    private void CloseModal() => _showModal = false;
+
+    private async Task OnSearchKeyUp() => await LoadAsync();
+
+    public void Dispose() => _liveSubscription?.Dispose();
+}
